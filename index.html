@@ -54,6 +54,8 @@ main .wrap { padding-block: 16px 48px; display: grid; gap: 14px }
 .note { font-size: 13px; color: var(--muted); margin: 0 }
 .grid2 { display: grid; gap: 14px }
 @media (min-width: 760px) { .grid2 { grid-template-columns: 1fr 1fr; align-items: start } }
+.grid3 { display: grid; gap: 14px }
+@media (min-width: 960px) { .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start } }
 .pick { display: grid; gap: 8px; grid-template-columns: 1fr; }
 @media (min-width: 560px) { .pick { grid-template-columns: 1fr 1fr } }
 label.f { display: grid; gap: 4px; font-size: 12px; color: var(--muted); font-weight: 600 }
@@ -104,7 +106,7 @@ footer { font-size: 12px; color: var(--muted); text-align: center; padding: 8px 
 <body>
 <header class="band"><div class="wrap">
   <div class="seal">DEL<br>TA</div>
-  <div><h1>델타 작계 기록</h1><p id="sub">S27 한염장명 · 동맹원 데이터로 작계 참여와 공헌·전공 순위</p></div>
+  <div><h1>델타 작계 기록</h1><p id="sub">S27 한염장명 · 동맹원 데이터로 작계 참여와 전공·기부·협공 순위</p></div>
 </div></header>
 <nav class="tabs" role="tablist"><div class="wrap">
   <button class="tab" role="tab" data-tab="op" aria-selected="true">작계</button>
@@ -115,8 +117,9 @@ footer { font-size: 12px; color: var(--muted); text-align: center; padding: 8px 
 <main><div class="wrap" id="view"></div></main>
 <footer>동맹원 목록 CSV(게임 내보내기)를 작계 직전·직후에 올리면 두 시점의 차이로 계산합니다 · DELTA 지휘부</footer>
 
+<script src="config.js"></script>
 <script>
-const API = "https://script.google.com/macros/s/AKfycbwEjORPCTE20EwMi_p6RQITXuAa_aeG-ik5_iYiSXh9sWE352UcTbmdZg36yind5ATWWA/exec";            // 구글 Apps Script 웹 앱 URL (…/exec). 비워 두면 이 기기에서만 보는 로컬 모드
+const API = "" || window.JAKGYE_API || '';   // Apps Script 웹 앱 URL (…/exec). 보통은 같은 폴더 config.js 에 적어 둠. 없으면 로컬 모드
 const USE_API = /^https:\/\//.test(API);
 const DEMO = null;         // 미리보기용 내장 스냅샷 (배포본은 null)
 const TEAMS = ['알파', '메타', '베타', '감마'];
@@ -177,8 +180,8 @@ function timeFromName(fn) {
 /* ── 계산 */
 const RULES = {
   h: { label: '협공이 오른 사람', test: d => d.h > 0 },
-  hc: { label: '협공 또는 공헌이 오른 사람', test: d => d.h > 0 || d.c > 0 },
   m: { label: '전공이 오른 사람', test: d => d.m > 0 },
+  hm: { label: '협공 또는 전공이 오른 사람', test: d => d.h > 0 || d.m > 0 },
 };
 function compare(A, B) {
   const out = [];
@@ -230,7 +233,7 @@ function needData() {
 function viewOp() {
   const n = S.snaps.length;
   if (n < 2) return (n ? `<div class="card"><h2>작계 비교에는 기록이 2개 필요합니다</h2>
-    <p class="note">지금 기록은 <b>${esc(S.snaps[0].label)}</b> 1개입니다. 다음 작계가 끝난 뒤 CSV를 한 번 더 올리면 그 사이의 참여·공헌·전공 순위가 나옵니다.
+    <p class="note">지금 기록은 <b>${esc(S.snaps[0].label)}</b> 1개입니다. 다음 작계가 끝난 뒤 CSV를 한 번 더 올리면 그 사이의 참여 인원과 전공·기부·협공 순위가 나옵니다.
     그 전에는 「이번 주」·「시즌 누적」 탭을 보세요.</p></div>` : needData());
   const A = S.snaps.find(s => s.id === S.a) || S.snaps[n - 2], B = S.snaps.find(s => s.id === S.b) || S.snaps[n - 1];
   const opts = (sel) => S.snaps.map(s => `<option value="${s.id}" ${s.id === sel ? 'selected' : ''}>${esc(s.label)} · ${tstr(s.time)}</option>`).join('');
@@ -244,18 +247,19 @@ function viewOp() {
   const test = x => x.d && RULES[S.rule].test(x.d);
   const yes = known.filter(test), no = known.filter(x => !test(x));
   const ts = teamStats(known, test);
-  const sumC = known.reduce((a, x) => a + Math.max(0, x.d.c), 0);
+  const sumH = known.reduce((a, x) => a + Math.max(0, x.d.h), 0);
   html += `<div class="card"><h2>참여 인원 <small>${esc(A.label)} → ${esc(B.label)}</small></h2>
     <div class="stats"><div class="stat"><b>${yes.length}</b><span>참여 / ${known.length}명</span></div>
     <div class="stat"><b>${known.length ? Math.round(yes.length / known.length * 100) : 0}%</b><span>참여율</span></div>
-    <div class="stat"><b>${fmt(sumC)}</b><span>공헌 합계</span></div></div>
+    <div class="stat"><b>${fmt(sumH)}</b><span>협공 합계</span></div></div>
     ${teamBars(ts)}
     <p class="note">참여 기준: ${RULES[S.rule].label}. 협공은 성지·관문 점령에 함께해야 오르므로 공성 참여 판정에 가장 가깝습니다.
     ${list.some(x => x.isNew) ? `새로 들어온 ${list.filter(x => x.isNew).length}명은 직전 기록이 없어 제외.` : ''}${gone.length ? ` 빠진 인원 ${gone.length}명.` : ''}</p></div>`;
   const L = byTeam(known);
   html += `<div class="card"><h2>순위 <small>${S.teamF === '전체' ? '전체' : S.teamF + ' 문벌'}</small></h2>${teamFilter()}</div>
-    <div class="grid2"><div class="card"><h2>공헌 TOP 10 <small>구간 증가량</small></h2>${rankList(topN(L, x => x.d.c), x => x.d.c, x => '협공 +' + fmt(x.d.h))}</div>
-    <div class="card"><h2>전공 TOP 10 <small>구간 증가량</small></h2>${rankList(topN(L, x => x.d.m), x => x.d.m, x => '공헌 +' + fmt(x.d.c))}</div></div>`;
+    <div class="grid3"><div class="card"><h2>전공 TOP 10 <small>구간 증가량</small></h2>${rankList(topN(L, x => x.d.m), x => x.d.m, x => '협공 +' + fmt(x.d.h))}</div>
+    <div class="card"><h2>기부 TOP 10 <small>구간 증가량</small></h2>${rankList(topN(L, x => x.d.dn), x => x.d.dn)}</div>
+    <div class="card"><h2>협공 TOP 10 <small>구간 증가량</small></h2>${rankList(topN(L, x => x.d.h), x => x.d.h, x => '전공 +' + fmt(x.d.m))}</div></div>`;
   const noL = byTeam(no);
   const groups = {}; for (const x of noL) (groups[x.team || '무소속'] ||= []).push(x.name);
   html += `<div class="card"><h2>미참여 ${noL.length}명 <small>${RULES[S.rule].label}이 아닌 인원</small></h2>
@@ -269,17 +273,16 @@ function viewWeek() {
   const list = [...B.rows.values()];
   const test = x => x.h_w > 0;
   const L = byTeam(list);
-  const K = { c_w: ['공헌', x => x.c_w], m_w: ['전공', x => x.m_w], h_w: ['협공', x => x.h_w], d_w: ['기부', x => x.d_w] };
+  const K = { m_w: ['전공', x => x.m_w], h_w: ['협공', x => x.h_w], d_w: ['기부', x => x.d_w] };
   return `<div class="card"><h2>이번 주 <small>${esc(B.label)} 기록 · 게임의 「이번 주」 수치 (월요일 초기화)</small></h2>
     <div class="stats"><div class="stat"><b>${list.filter(test).length}</b><span>협공 참여 / ${list.length}명</span></div>
-    <div class="stat"><b>${fmt(list.reduce((a, x) => a + x.c_w, 0))}</b><span>공헌 합계</span></div>
-    <div class="stat"><b>${list.filter(x => x.m_w > 0).length}</b><span>전공 획득 인원</span></div></div>
+    <div class="stat"><b>${list.filter(x => x.m_w > 0).length}</b><span>전공 획득 인원</span></div>
+    <div class="stat"><b>${fmt(list.reduce((a, x) => a + x.d_w, 0))}</b><span>기부 합계</span></div></div>
     ${teamBars(teamStats(list, test))}</div>
     <div class="card"><h2>순위</h2>${teamFilter()}</div>
-    <div class="grid2"><div class="card"><h2>이번 주 공헌 TOP 10</h2>${rankList(topN(L, K.c_w[1]), K.c_w[1], x => '협공 ' + fmt(x.h_w))}</div>
-    <div class="card"><h2>이번 주 전공 TOP 10</h2>${rankList(topN(L, K.m_w[1]), K.m_w[1])}</div>
-    <div class="card"><h2>이번 주 협공 TOP 10</h2>${rankList(topN(L, K.h_w[1]), K.h_w[1])}</div>
-    <div class="card"><h2>이번 주 기부 TOP 10</h2>${rankList(topN(L, K.d_w[1]), K.d_w[1])}</div></div>`;
+    <div class="grid3"><div class="card"><h2>이번 주 전공 TOP 10</h2>${rankList(topN(L, K.m_w[1]), K.m_w[1])}</div>
+    <div class="card"><h2>이번 주 기부 TOP 10</h2>${rankList(topN(L, K.d_w[1]), K.d_w[1])}</div>
+    <div class="card"><h2>이번 주 협공 TOP 10</h2>${rankList(topN(L, K.h_w[1]), K.h_w[1])}</div></div>`;
 }
 
 function viewSeason() {
@@ -287,17 +290,16 @@ function viewSeason() {
   const B = S.snaps[S.snaps.length - 1];
   const list = [...B.rows.values()]; const L = byTeam(list);
   const agg = {};
-  for (const x of list) { const t = TEAMS.includes(x.team) ? x.team : '기타'; const a = agg[t] ||= { n: 0, c: 0, m: 0, h: 0, p: 0 }; a.n++; a.c += x.c; a.m += x.m; a.h += x.h; a.p += x.power }
+  for (const x of list) { const t = TEAMS.includes(x.team) ? x.team : '기타'; const a = agg[t] ||= { n: 0, m: 0, h: 0, d: 0 }; a.n++; a.m += x.m; a.h += x.h; a.d += x.d }
   const rows = Object.entries(agg).sort((a, b) => TEAMS.indexOf(a[0]) - TEAMS.indexOf(b[0]));
   return `<div class="card"><h2>시즌 누적 <small>${esc(B.label)} 기록 · 총량 수치</small></h2>
-    <div class="scroll"><table class="tbl"><thead><tr><th>문벌</th><th>인원</th><th>공헌 합계</th><th>1인 평균</th><th>협공 평균</th><th>세력치 평균</th></tr></thead><tbody>
-    ${rows.map(([t, a]) => `<tr><td>${tchip(t)}</td><td>${a.n}</td><td>${fmt(a.c)}</td><td>${fmt(a.c / a.n)}</td><td>${fmt(a.h / a.n)}</td><td>${fmt(a.p / a.n)}</td></tr>`).join('')}
+    <div class="scroll"><table class="tbl"><thead><tr><th>문벌</th><th>인원</th><th>전공 합계</th><th>기부 합계</th><th>협공 1인 평균</th></tr></thead><tbody>
+    ${rows.map(([t, a]) => `<tr><td>${tchip(t)}</td><td>${a.n}</td><td>${fmt(a.m)}</td><td>${fmt(a.d)}</td><td>${fmt(a.h / a.n)}</td></tr>`).join('')}
     </tbody></table></div></div>
     <div class="card"><h2>순위</h2>${teamFilter()}</div>
-    <div class="grid2"><div class="card"><h2>시즌 공헌 TOP 10</h2>${rankList(topN(L, x => x.c), x => x.c, x => '협공 ' + fmt(x.h))}</div>
-    <div class="card"><h2>시즌 전공 TOP 10</h2>${rankList(topN(L, x => x.m), x => x.m)}</div>
-    <div class="card"><h2>시즌 협공 TOP 10</h2>${rankList(topN(L, x => x.h), x => x.h)}</div>
-    <div class="card"><h2>세력치 TOP 10</h2>${rankList(topN(L, x => x.power), x => x.power)}</div></div>`;
+    <div class="grid3"><div class="card"><h2>시즌 전공 TOP 10</h2>${rankList(topN(L, x => x.m), x => x.m)}</div>
+    <div class="card"><h2>시즌 기부 TOP 10</h2>${rankList(topN(L, x => x.d), x => x.d)}</div>
+    <div class="card"><h2>시즌 협공 TOP 10</h2>${rankList(topN(L, x => x.h), x => x.h)}</div></div>`;
 }
 
 function viewAdmin() {
