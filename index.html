@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>델타 작계 기록</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@700;900&display=swap">
+<style>
+/* 덱 추천기와 같은 톤: 붉은 군기 띠 + 한지 바탕. 탭 4개(작계 · 이번 주 · 시즌 누적 · 기록 관리), 휴대폰 한 열 */
+:root {
+  --bg: #F4EFE5; --surface: #FBF8F2; --surface2: #EEE6D5; --ink: #2B211C; --muted: #74685B; --line: #DCCFB4;
+  --band: #5C0A10; --band-ink: #EBD29E; --accent: #6E1015; --gold: #9A7642; --gold-soft: #EBD29E;
+  --ok: #3E6B2E; --ok-bg: #E2EDD8; --bad: #A23B2A; --bad-bg: #F6DED8; --warn-bg: #FBEFD0;
+  --alpha: #8E1B1B; --meta: #3F6489; --beta: #4F7A3A; --gamma: #9A7642; --none: #6B5B7A;
+  --f-display: "Noto Serif KR", "Nanum Myeongjo", "AppleMyungjo", serif;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1A1311; --surface: #241A17; --surface2: #2E221E; --ink: #EDE3D3; --muted: #A8998A; --line: #3D2F29;
+  --band: #3A0C10; --band-ink: #E6C98E; --accent: #E07A6C; --gold: #C9A46A; --gold-soft: #5A4426;
+  --ok: #93C47D; --ok-bg: #22301C; --bad: #EB8A78; --bad-bg: #3A1D18; --warn-bg: #3A2E16;
+  --alpha: #C0413E; --meta: #4C7AA6; --beta: #5E8E46; --gamma: #A8844C; --none: #7E6D90; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1A1311; --surface: #241A17; --surface2: #2E221E; --ink: #EDE3D3; --muted: #A8998A; --line: #3D2F29;
+  --band: #3A0C10; --band-ink: #E6C98E; --accent: #E07A6C; --gold: #C9A46A; --gold-soft: #5A4426;
+  --ok: #93C47D; --ok-bg: #22301C; --bad: #EB8A78; --bad-bg: #3A1D18; --warn-bg: #3A2E16;
+  --alpha: #C0413E; --meta: #4C7AA6; --beta: #5E8E46; --gamma: #A8844C; --none: #7E6D90; color-scheme: dark }
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { margin: 0 }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--band); }
+button, input, select { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.band { background: var(--band); color: var(--band-ink); border-bottom: 3px solid var(--gold); }
+.band .wrap { padding-block: 18px 14px; display: flex; align-items: center; gap: 14px; }
+.seal { flex: none; width: 46px; height: 46px; border: 2px solid var(--band-ink); border-radius: 6px; display: grid; place-items: center;
+  font-family: var(--f-display); font-weight: 900; font-size: 13px; letter-spacing: .08em; line-height: 1; text-align: center; }
+.band h1 { margin: 0; font-family: var(--f-display); font-weight: 900; font-size: clamp(22px, 5vw, 30px); letter-spacing: .02em; }
+.band p { margin: 2px 0 0; font-size: 13px; opacity: .85 }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+.tabs .wrap { display: flex; gap: 2px; }
+.tab { flex: 1; background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 4px 10px; font-weight: 600; color: var(--muted); font-size: 14px; white-space: nowrap }
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent) }
+main .wrap { padding-block: 16px 48px; display: grid; gap: 14px }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.card h2 { margin: 0; font-family: var(--f-display); font-size: 18px; font-weight: 900; color: var(--accent); display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap }
+.card h2 small { font-family: var(--f-body); font-size: 12px; font-weight: 500; color: var(--muted) }
+.note { font-size: 13px; color: var(--muted); margin: 0 }
+.grid2 { display: grid; gap: 14px }
+@media (min-width: 760px) { .grid2 { grid-template-columns: 1fr 1fr; align-items: start } }
+.pick { display: grid; gap: 8px; grid-template-columns: 1fr; }
+@media (min-width: 560px) { .pick { grid-template-columns: 1fr 1fr } }
+label.f { display: grid; gap: 4px; font-size: 12px; color: var(--muted); font-weight: 600 }
+select, input[type=text], input[type=password], input[type=datetime-local] { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); min-width: 0 }
+.seg { display: flex; flex-wrap: wrap; gap: 6px }
+.seg button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--muted) }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #FFF8EA }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px }
+.stat { background: var(--surface2); border-radius: 8px; padding: 10px; text-align: center; min-width: 0 }
+.stat b { display: block; font-family: var(--f-display); font-size: clamp(20px, 6vw, 28px); font-weight: 900; color: var(--accent); line-height: 1.2; font-variant-numeric: tabular-nums }
+.stat span { font-size: 12px; color: var(--muted) }
+.teams { display: grid; gap: 8px }
+.trow { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center; font-size: 14px }
+.bar { height: 12px; background: var(--surface2); border-radius: 6px; overflow: hidden }
+.bar i { display: block; height: 100%; border-radius: 6px }
+.trow .v { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap }
+.chip { display: inline-block; font-size: 11px; font-weight: 700; color: #FFF8EA; border-radius: 4px; padding: 1px 6px; line-height: 1.6; white-space: nowrap }
+ol.rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px }
+ol.rank li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 7px 6px; border-bottom: 1px dashed var(--line) }
+ol.rank li:last-child { border-bottom: 0 }
+.no { font-family: var(--f-display); font-weight: 900; text-align: center; color: var(--muted) }
+li:nth-child(1) .no { color: #C9A21E } li:nth-child(2) .no { color: #8C98A4 } li:nth-child(3) .no { color: #B0703A }
+.nm { display: flex; gap: 6px; align-items: center; min-width: 0 }
+.nm span.t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600 }
+.val { font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; white-space: nowrap }
+.val small { display: block; font-weight: 500; font-size: 11px; color: var(--muted) }
+.empty { font-size: 13px; color: var(--muted); padding: 10px; background: var(--surface2); border-radius: 8px; text-align: center }
+details { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--bg) }
+details summary { cursor: pointer; font-weight: 600; font-size: 14px }
+.names { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px }
+.names span { font-size: 13px; background: var(--surface2); border-radius: 6px; padding: 2px 8px }
+.btn { border: 0; background: var(--accent); color: #FFF8EA; border-radius: 8px; padding: 10px 14px; font-weight: 700 }
+.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent) }
+.btn:disabled { opacity: .5 }
+table.snaps { width: 100%; border-collapse: collapse; font-size: 13px }
+table.snaps th, table.snaps td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--line) }
+table.snaps td.n { text-align: right; font-variant-numeric: tabular-nums }
+.msg { font-size: 13px; padding: 8px 10px; border-radius: 8px }
+.msg.ok { background: var(--ok-bg); color: var(--ok) } .msg.bad { background: var(--bad-bg); color: var(--bad) } .msg.warn { background: var(--warn-bg) }
+.search { display: flex; gap: 8px }
+.tbl { width: 100%; border-collapse: collapse; font-size: 12px }
+.tbl th, .tbl td { padding: 6px 3px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums }
+.tbl th:first-child, .tbl td:first-child { text-align: left }
+.scroll { overflow-x: auto }
+footer { font-size: 12px; color: var(--muted); text-align: center; padding: 8px 16px 32px }
+</style>
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <div class="seal">DEL<br>TA</div>
+  <div><h1>델타 작계 기록</h1><p id="sub">S27 한염장명 · 동맹원 데이터로 작계 참여와 공헌·전공 순위</p></div>
+</div></header>
+<nav class="tabs" role="tablist"><div class="wrap">
+  <button class="tab" role="tab" data-tab="op" aria-selected="true">작계</button>
+  <button class="tab" role="tab" data-tab="week" aria-selected="false">이번 주</button>
+  <button class="tab" role="tab" data-tab="season" aria-selected="false">시즌 누적</button>
+  <button class="tab" role="tab" data-tab="admin" aria-selected="false">기록 관리</button>
+</div></nav>
+<main><div class="wrap" id="view"></div></main>
+<footer>동맹원 목록 CSV(게임 내보내기)를 작계 직전·직후에 올리면 두 시점의 차이로 계산합니다 · DELTA 지휘부</footer>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbwEjORPCTE20EwMi_p6RQITXuAa_aeG-ik5_iYiSXh9sWE352UcTbmdZg36yind5ATWWA/exec";            // 구글 Apps Script 웹 앱 URL (…/exec). 비워 두면 이 기기에서만 보는 로컬 모드
+const USE_API = /^https:\/\//.test(API);
+const DEMO = null;         // 미리보기용 내장 스냅샷 (배포본은 null)
+const TEAMS = ['알파', '메타', '베타', '감마'];
+const TEAM_COLOR = { 알파: 'var(--alpha)', 메타: 'var(--meta)', 베타: 'var(--beta)', 감마: 'var(--gamma)' };
+const COLS = { name: '회원', c_w: '공헌이번주', m_w: '전공이번주', h_w: '협공이번주', d_w: '기부이번주',
+  c: '공헌총량', m: '전공총량', h: '협공총량', d: '기부총량', power: '세력치', ju: '소속주', team: '문벌', rank: '동맹공헌랭킹' };
+const S = { snaps: [], tab: 'op', a: null, b: null, rule: 'h', teamF: '전체', wkKey: 'c_w', seKey: 'c', msg: null };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+/* ── 숫자 표기: 100만 이상은 「만」 단위, 1억 이상은 「억」 */
+function fmt(n) {
+  if (n == null || isNaN(n)) return '—';
+  const s = n < 0 ? '-' : ''; n = Math.abs(n);
+  if (n >= 1e8) return s + (n / 1e8).toFixed(2).replace(/\.?0+$/, '') + '억';
+  if (n >= 1e6) return s + Math.round(n / 1e4).toLocaleString('ko-KR') + '만';   // 100만 미만은 그대로
+  return s + Math.round(n).toLocaleString('ko-KR');
+}
+const full = n => (n == null ? '—' : Math.round(n).toLocaleString('ko-KR'));
+const tchip = t => `<span class="chip" style="background:${TEAM_COLOR[t] || 'var(--none)'}">${esc(t || '무소속')}</span>`;
+function tstr(ms) { const d = new Date(ms); const p = n => String(n).padStart(2, '0'); return `${d.getMonth() + 1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+
+/* ── CSV → 스냅샷 */
+function parseCSV(text) {
+  text = text.replace(/^﻿/, '');
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++ } else q = false } else cell += ch; continue }
+    if (ch === '"') q = true; else if (ch === ',') { row.push(cell); cell = '' }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = '' }
+    else cell += ch;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row) }
+  return rows.map(r => r.map(c => c.trim())).filter(r => r.some(c => c));
+}
+function toSnap(csvText, meta) {
+  const rows = parseCSV(csvText);
+  if (!rows.length) throw new Error('빈 파일입니다');
+  const head = rows[0].map(h => h.replace(/\s+/g, ''));
+  const idx = {}; for (const [k, h] of Object.entries(COLS)) idx[k] = head.indexOf(h);
+  if (idx.name < 0 || idx.c < 0) throw new Error('동맹원 목록 CSV가 아닙니다 (회원 · 공헌총량 열이 없음)');
+  const num = v => { const n = Number(String(v ?? '').replace(/[^\d.-]/g, '')); return isNaN(n) ? 0 : n };
+  const m = new Map();
+  for (const r of rows.slice(1)) {
+    const name = r[idx.name]; if (!name) continue;
+    const o = { name, team: idx.team >= 0 ? r[idx.team] : '', ju: idx.ju >= 0 ? r[idx.ju] : '' };
+    for (const k of ['c_w', 'm_w', 'h_w', 'd_w', 'c', 'm', 'h', 'd', 'power']) o[k] = idx[k] >= 0 ? num(r[idx[k]]) : 0;
+    m.set(name, o);
+  }
+  return { id: meta.id, time: meta.time, label: meta.label || tstr(meta.time), rows: m, csv: csvText };
+}
+function timeFromName(fn) {
+  const t = String(fn).match(/(20\d\d)[_\-.]?(\d\d)[_\-.]?(\d\d)[_\-. ]?(\d\d)[_\-.:]?(\d\d)(?:[_\-.:]?(\d\d))?/);
+  return t ? new Date(+t[1], +t[2] - 1, +t[3], +t[4], +t[5], +(t[6] || 0)).getTime() : null;
+}
+
+/* ── 계산 */
+const RULES = {
+  h: { label: '협공이 오른 사람', test: d => d.h > 0 },
+  hc: { label: '협공 또는 공헌이 오른 사람', test: d => d.h > 0 || d.c > 0 },
+  m: { label: '전공이 오른 사람', test: d => d.m > 0 },
+};
+function compare(A, B) {
+  const out = [];
+  for (const [name, cur] of B.rows) {
+    const p = A.rows.get(name);
+    if (!p) { out.push({ ...cur, isNew: true, d: null }); continue }
+    out.push({ ...cur, d: { c: cur.c - p.c, m: cur.m - p.m, h: cur.h - p.h, dn: cur.d - p.d } });
+  }
+  const gone = [...A.rows.keys()].filter(n => !B.rows.has(n));
+  return { list: out, gone };
+}
+function teamStats(list, test) {
+  const res = {};
+  for (const t of [...TEAMS, '기타']) res[t] = { n: 0, y: 0 };
+  for (const x of list) {
+    const t = TEAMS.includes(x.team) ? x.team : '기타';
+    res[t].n++; if (test(x)) res[t].y++;
+  }
+  if (!res['기타'].n) delete res['기타'];
+  return res;
+}
+function topN(list, val, n = 10) {
+  return list.filter(x => val(x) > 0).sort((a, b) => val(b) - val(a)).slice(0, n);
+}
+
+/* ── 그리기 */
+function rankList(items, val, sub) {
+  if (!items.length) return '<div class="empty">이 구간에 오른 사람이 없습니다</div>';
+  return '<ol class="rank">' + items.map((x, i) => `<li><span class="no">${i + 1}</span>
+    <span class="nm">${tchip(x.team)}<span class="t">${esc(x.name)}</span></span>
+    <span class="val">${fmt(val(x))}${sub ? `<small>${sub(x)}</small>` : ''}</span></li>`).join('') + '</ol>';
+}
+function teamBars(ts, unit = '명') {
+  return '<div class="teams">' + Object.entries(ts).map(([t, s]) => {
+    const pct = s.n ? Math.round(s.y / s.n * 100) : 0;
+    return `<div class="trow">${tchip(t)}<div class="bar"><i style="width:${pct}%;background:${TEAM_COLOR[t] || 'var(--none)'}"></i></div>
+      <span class="v">${s.y}/${s.n}${unit} · ${pct}%</span></div>`;
+  }).join('') + '</div>';
+}
+function teamFilter() {
+  return `<div class="seg" data-k="teamF">${['전체', ...TEAMS].map(t => `<button aria-pressed="${S.teamF === t}" data-v="${t}">${t}</button>`).join('')}</div>`;
+}
+const byTeam = list => S.teamF === '전체' ? list : list.filter(x => x.team === S.teamF);
+function needData() {
+  return `<div class="card"><h2>아직 기록이 없습니다</h2><p class="note">「기록 관리」 탭에서 동맹원 목록 CSV를 올려 주세요.
+  작계 순위는 <b>작계 직전</b>과 <b>작계 직후</b> 두 번 올린 CSV의 차이로 계산합니다.</p></div>`;
+}
+
+function viewOp() {
+  const n = S.snaps.length;
+  if (n < 2) return (n ? `<div class="card"><h2>작계 비교에는 기록이 2개 필요합니다</h2>
+    <p class="note">지금 기록은 <b>${esc(S.snaps[0].label)}</b> 1개입니다. 다음 작계가 끝난 뒤 CSV를 한 번 더 올리면 그 사이의 참여·공헌·전공 순위가 나옵니다.
+    그 전에는 「이번 주」·「시즌 누적」 탭을 보세요.</p></div>` : needData());
+  const A = S.snaps.find(s => s.id === S.a) || S.snaps[n - 2], B = S.snaps.find(s => s.id === S.b) || S.snaps[n - 1];
+  const opts = (sel) => S.snaps.map(s => `<option value="${s.id}" ${s.id === sel ? 'selected' : ''}>${esc(s.label)} · ${tstr(s.time)}</option>`).join('');
+  let html = `<div class="card"><h2>작계 구간 <small>두 기록 사이에 오른 수치</small></h2>
+    <div class="pick"><label class="f">작계 직전 (시작)<select id="selA">${opts(A.id)}</select></label>
+    <label class="f">작계 직후 (끝)<select id="selB">${opts(B.id)}</select></label></div>
+    <div><label class="f" style="margin-bottom:4px">참여 기준</label><div class="seg" data-k="rule">${Object.entries(RULES).map(([k, r]) => `<button aria-pressed="${S.rule === k}" data-v="${k}">${r.label}</button>`).join('')}</div></div></div>`;
+  if (A.time >= B.time) return html + '<div class="card"><div class="msg bad">「작계 직전」이 「작계 직후」보다 앞선 기록이어야 합니다.</div></div>';
+  const { list, gone } = compare(A, B);
+  const known = list.filter(x => x.d);
+  const test = x => x.d && RULES[S.rule].test(x.d);
+  const yes = known.filter(test), no = known.filter(x => !test(x));
+  const ts = teamStats(known, test);
+  const sumC = known.reduce((a, x) => a + Math.max(0, x.d.c), 0);
+  html += `<div class="card"><h2>참여 인원 <small>${esc(A.label)} → ${esc(B.label)}</small></h2>
+    <div class="stats"><div class="stat"><b>${yes.length}</b><span>참여 / ${known.length}명</span></div>
+    <div class="stat"><b>${known.length ? Math.round(yes.length / known.length * 100) : 0}%</b><span>참여율</span></div>
+    <div class="stat"><b>${fmt(sumC)}</b><span>공헌 합계</span></div></div>
+    ${teamBars(ts)}
+    <p class="note">참여 기준: ${RULES[S.rule].label}. 협공은 성지·관문 점령에 함께해야 오르므로 공성 참여 판정에 가장 가깝습니다.
+    ${list.some(x => x.isNew) ? `새로 들어온 ${list.filter(x => x.isNew).length}명은 직전 기록이 없어 제외.` : ''}${gone.length ? ` 빠진 인원 ${gone.length}명.` : ''}</p></div>`;
+  const L = byTeam(known);
+  html += `<div class="card"><h2>순위 <small>${S.teamF === '전체' ? '전체' : S.teamF + ' 문벌'}</small></h2>${teamFilter()}</div>
+    <div class="grid2"><div class="card"><h2>공헌 TOP 10 <small>구간 증가량</small></h2>${rankList(topN(L, x => x.d.c), x => x.d.c, x => '협공 +' + fmt(x.d.h))}</div>
+    <div class="card"><h2>전공 TOP 10 <small>구간 증가량</small></h2>${rankList(topN(L, x => x.d.m), x => x.d.m, x => '공헌 +' + fmt(x.d.c))}</div></div>`;
+  const noL = byTeam(no);
+  const groups = {}; for (const x of noL) (groups[x.team || '무소속'] ||= []).push(x.name);
+  html += `<div class="card"><h2>미참여 ${noL.length}명 <small>${RULES[S.rule].label}이 아닌 인원</small></h2>
+    ${noL.length ? Object.entries(groups).map(([t, ns]) => `<details><summary>${tchip(t)} ${ns.length}명</summary><div class="names">${ns.map(x => `<span>${esc(x)}</span>`).join('')}</div></details>`).join('') : '<div class="empty">전원 참여</div>'}</div>`;
+  return html;
+}
+
+function viewWeek() {
+  if (!S.snaps.length) return needData();
+  const B = S.snaps[S.snaps.length - 1];
+  const list = [...B.rows.values()];
+  const test = x => x.h_w > 0;
+  const L = byTeam(list);
+  const K = { c_w: ['공헌', x => x.c_w], m_w: ['전공', x => x.m_w], h_w: ['협공', x => x.h_w], d_w: ['기부', x => x.d_w] };
+  return `<div class="card"><h2>이번 주 <small>${esc(B.label)} 기록 · 게임의 「이번 주」 수치 (월요일 초기화)</small></h2>
+    <div class="stats"><div class="stat"><b>${list.filter(test).length}</b><span>협공 참여 / ${list.length}명</span></div>
+    <div class="stat"><b>${fmt(list.reduce((a, x) => a + x.c_w, 0))}</b><span>공헌 합계</span></div>
+    <div class="stat"><b>${list.filter(x => x.m_w > 0).length}</b><span>전공 획득 인원</span></div></div>
+    ${teamBars(teamStats(list, test))}</div>
+    <div class="card"><h2>순위</h2>${teamFilter()}</div>
+    <div class="grid2"><div class="card"><h2>이번 주 공헌 TOP 10</h2>${rankList(topN(L, K.c_w[1]), K.c_w[1], x => '협공 ' + fmt(x.h_w))}</div>
+    <div class="card"><h2>이번 주 전공 TOP 10</h2>${rankList(topN(L, K.m_w[1]), K.m_w[1])}</div>
+    <div class="card"><h2>이번 주 협공 TOP 10</h2>${rankList(topN(L, K.h_w[1]), K.h_w[1])}</div>
+    <div class="card"><h2>이번 주 기부 TOP 10</h2>${rankList(topN(L, K.d_w[1]), K.d_w[1])}</div></div>`;
+}
+
+function viewSeason() {
+  if (!S.snaps.length) return needData();
+  const B = S.snaps[S.snaps.length - 1];
+  const list = [...B.rows.values()]; const L = byTeam(list);
+  const agg = {};
+  for (const x of list) { const t = TEAMS.includes(x.team) ? x.team : '기타'; const a = agg[t] ||= { n: 0, c: 0, m: 0, h: 0, p: 0 }; a.n++; a.c += x.c; a.m += x.m; a.h += x.h; a.p += x.power }
+  const rows = Object.entries(agg).sort((a, b) => TEAMS.indexOf(a[0]) - TEAMS.indexOf(b[0]));
+  return `<div class="card"><h2>시즌 누적 <small>${esc(B.label)} 기록 · 총량 수치</small></h2>
+    <div class="scroll"><table class="tbl"><thead><tr><th>문벌</th><th>인원</th><th>공헌 합계</th><th>1인 평균</th><th>협공 평균</th><th>세력치 평균</th></tr></thead><tbody>
+    ${rows.map(([t, a]) => `<tr><td>${tchip(t)}</td><td>${a.n}</td><td>${fmt(a.c)}</td><td>${fmt(a.c / a.n)}</td><td>${fmt(a.h / a.n)}</td><td>${fmt(a.p / a.n)}</td></tr>`).join('')}
+    </tbody></table></div></div>
+    <div class="card"><h2>순위</h2>${teamFilter()}</div>
+    <div class="grid2"><div class="card"><h2>시즌 공헌 TOP 10</h2>${rankList(topN(L, x => x.c), x => x.c, x => '협공 ' + fmt(x.h))}</div>
+    <div class="card"><h2>시즌 전공 TOP 10</h2>${rankList(topN(L, x => x.m), x => x.m)}</div>
+    <div class="card"><h2>시즌 협공 TOP 10</h2>${rankList(topN(L, x => x.h), x => x.h)}</div>
+    <div class="card"><h2>세력치 TOP 10</h2>${rankList(topN(L, x => x.power), x => x.power)}</div></div>`;
+}
+
+function viewAdmin() {
+  const mode = USE_API ? '<div class="msg ok">공유 모드 — 올린 기록은 동맹원 모두에게 보입니다. 올리기·삭제에는 관리자 키가 필요합니다.</div>'
+    : '<div class="msg warn">로컬 모드 — 서버 주소가 없어 이 기기에서만 보입니다. (설치 안내의 Apps Script 주소를 넣으면 공유 모드)</div>';
+  return `<div class="card"><h2>기록 올리기</h2>${mode}
+    <p class="note">게임 동맹원 목록을 CSV로 내보내 그대로 올리세요. 파일 이름의 날짜·시각(예: 2026_11_20_10_31_46)을 기록 시각으로 씁니다.
+    <b>작계 직전</b>에 1번, <b>작계 직후</b>에 1번 올리면 「작계」 탭에서 그 사이 순위가 나옵니다.</p>
+    <label class="f">CSV 파일<input type="file" id="file" accept=".csv,text/csv"></label>
+    <div class="pick"><label class="f">이름 (예: 11/22 22시 평강 공성 후)<input type="text" id="label" maxlength="40" placeholder="비우면 날짜·시각"></label>
+    <label class="f">기록 시각<input type="datetime-local" id="when"></label></div>
+    ${USE_API ? '<label class="f">관리자 키<input type="password" id="key" autocomplete="current-password"></label>' : ''}
+    <button class="btn" id="up">올리기</button>
+    ${S.msg ? `<div class="msg ${S.msg[0]}">${esc(S.msg[1])}</div>` : ''}</div>
+    <div class="card"><h2>기록 목록 <small>${S.snaps.length}개</small></h2>
+    ${S.snaps.length ? `<div class="scroll"><table class="snaps"><thead><tr><th>시각</th><th>이름</th><th class="n">인원</th><th></th></tr></thead><tbody>
+    ${[...S.snaps].reverse().map(s => `<tr><td>${tstr(s.time)}</td><td>${esc(s.label)}</td><td class="n">${s.rows.size}</td>
+      <td style="text-align:right">${String(s.id).startsWith('demo') ? '<span class="note">미리보기</span>' : `<button class="btn ghost" data-del="${s.id}" style="padding:4px 10px;font-size:12px">삭제</button>`}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">없음</div>'}
+    </div>`;
+}
+
+function render() {
+  document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === S.tab));
+  $('#view').innerHTML = ({ op: viewOp, week: viewWeek, season: viewSeason, admin: viewAdmin })[S.tab]();
+  bind();
+}
+function bind() {
+  document.querySelectorAll('.seg[data-k] button').forEach(b => b.onclick = () => { S[b.parentElement.dataset.k] = b.dataset.v; render() });
+  const a = $('#selA'), b = $('#selB');
+  if (a) a.onchange = () => { S.a = a.value; S.b = b.value; render() };
+  if (b) b.onchange = () => { S.a = a.value; S.b = b.value; render() };
+  const f = $('#file');
+  if (f) f.onchange = () => { const t = f.files[0] && timeFromName(f.files[0].name); if (t) $('#when').value = new Date(t - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) };
+  const up = $('#up'); if (up) up.onclick = upload;
+  document.querySelectorAll('[data-del]').forEach(x => x.onclick = () => del(x.dataset.del));
+}
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => { S.tab = b.dataset.tab; S.msg = null; render(); window.scrollTo({ top: 0 }) });
+
+/* ── 저장소: 공유(Apps Script) 또는 로컬(이 기기) */
+const LKEY = 'delta-jakgye-v1';
+function saveLocal() { try { localStorage.setItem(LKEY, JSON.stringify(S.snaps.filter(s => !String(s.id).startsWith('demo')).map(s => ({ id: s.id, time: s.time, label: s.label, csv: s.csv })))) } catch (e) {} }
+function addSnap(s) { S.snaps = S.snaps.filter(x => x.id !== s.id).concat(s).sort((a, b) => a.time - b.time); S.a = S.b = null }
+async function load() {
+  S.snaps = [];
+  if (DEMO) for (const d of DEMO) addSnap(toSnap(d.csv, d));
+  try {
+    if (USE_API) {
+      const r = await fetch(API + '?action=all'); const j = await r.json();
+      if (!j.ok) throw new Error(j.error || '서버 오류');
+      for (const d of j.snaps) { try { addSnap(toSnap(d.csv, d)) } catch (e) {} }
+    } else {
+      let arr = []; try { arr = JSON.parse(localStorage.getItem(LKEY) || '[]') } catch (e) {}
+      for (const d of arr) { try { addSnap(toSnap(d.csv, d)) } catch (e) {} }
+    }
+  } catch (e) { S.msg = ['bad', '기록을 불러오지 못했습니다: ' + e.message]; S.tab = 'admin' }
+  render();
+}
+async function upload() {
+  const f = $('#file').files[0];
+  if (!f) { S.msg = ['bad', 'CSV 파일을 고르세요']; return render() }
+  const text = await f.text();
+  const w = $('#when').value; const time = w ? new Date(w).getTime() : (timeFromName(f.name) || Date.now());
+  const label = $('#label').value.trim() || tstr(time);
+  let snap; try { snap = toSnap(text, { id: String(time), time, label }) } catch (e) { S.msg = ['bad', e.message]; return render() }
+  if (USE_API) {
+    const key = $('#key').value; $('#up').disabled = true;
+    try {
+      const r = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'upload', key, id: snap.id, time, label, csv: text }) });
+      const j = await r.json(); if (!j.ok) throw new Error(j.error || '실패');
+    } catch (e) { S.msg = ['bad', '올리기 실패: ' + e.message]; return render() }
+  }
+  addSnap(snap); if (!USE_API) saveLocal();
+  S.msg = ['ok', `「${label}」 ${snap.rows.size}명 기록을 올렸습니다.`]; render();
+}
+async function del(id) {
+  const s = S.snaps.find(x => x.id === id); if (!s || !confirm(`「${s.label}」 기록을 지울까요?`)) return;
+  if (USE_API) {
+    const key = ($('#key') || {}).value || prompt('관리자 키');
+    try { const r = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'delete', key, id }) }); const j = await r.json(); if (!j.ok) throw new Error(j.error) }
+    catch (e) { S.msg = ['bad', '삭제 실패: ' + e.message]; return render() }
+  }
+  S.snaps = S.snaps.filter(x => x.id !== id); S.a = S.b = null; if (!USE_API) saveLocal();
+  S.msg = ['ok', '삭제했습니다.']; render();
+}
+load();
+</script>
+</body>
+</html>
